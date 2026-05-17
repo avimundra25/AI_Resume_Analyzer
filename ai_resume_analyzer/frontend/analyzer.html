@@ -928,7 +928,7 @@ anBtn.addEventListener('click',async function(){
     setTimeout(function(){ card.classList.add('complete'); },300);
     setTimeout(function(){ card.classList.remove('done','complete'); },900);
     document.getElementById('skelSec').classList.remove('on');
-    toast('Error: '+e.message+' — Make sure Flask is running: python app.py','te',7000);
+    toast('Error: '+e.message,'te',7000);
   }finally{
     stopLoad();document.getElementById('lov').classList.remove('on');anBtn.disabled=false;
   }
