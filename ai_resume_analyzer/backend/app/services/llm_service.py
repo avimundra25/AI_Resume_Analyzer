@@ -15,7 +15,7 @@ else:
 
 def generate_evaluation_report(parsed_resume_data: Dict, job_description: str, output_filename: str = "AI_Recommendations_Report.docx") -> dict:
     logger.info("Initializing Gemini API call...")
-    model = genai.GenerativeModel('gemini-1.5-flash')
+    model = genai.GenerativeModel('gemini-2.5-flash')
     resume_string = json.dumps(parsed_resume_data, indent=2)
     
     # UPDATED PROMPT: Forces the LLM to output the EXACT JSON format the frontend UI expects
