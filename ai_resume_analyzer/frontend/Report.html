@@ -1,0 +1,687 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>ResumeIQ — My Reports</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📄</text></svg>"/>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#07101e;--surface:#0d1a2d;--surface2:#122038;--border:#1c3050;
+  --accent:#89c2e0;--accent2:#5294b5;--accent3:#b8d8ec;
+  --text:#d8eaf7;--muted:#456b85;
+  --green:#4ade80;--yellow:#fbbf24;--red:#f87171;
+  --glow:0 0 40px rgba(137,194,224,.12);--dw:300px;
+}
+body.light{
+  --bg:#f0f5fa;--surface:#fff;--surface2:#e8f0f8;--border:#c5d6e8;
+  --accent:#1a6fa0;--accent2:#1558a0;--accent3:#1a6fa0;
+  --text:#0a1929;--muted:#4a6a88;
+}
+html{scroll-behavior:smooth}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);overflow-x:hidden;transition:background .25s,color .25s}
+body::before{content:'';position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='4'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.035'/%3E%3C/svg%3E");pointer-events:none;z-index:0;opacity:.5}
+body::after{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(137,194,224,.035) 1px,transparent 1px),linear-gradient(90deg,rgba(137,194,224,.035) 1px,transparent 1px);background-size:60px 60px;pointer-events:none;z-index:0}
+
+/* NAV */
+nav{position:fixed;top:0;left:0;right:0;z-index:300;display:flex;align-items:center;gap:14px;padding:16px 48px;background:rgba(7,16,30,.92);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);transition:background .25s}
+body.light nav{background:rgba(240,245,250,.95)}
+.nav-menu-btn{background:none;border:none;cursor:pointer;display:flex;flex-direction:column;gap:5px;padding:6px;border-radius:7px;transition:background .2s;flex-shrink:0}
+.nav-menu-btn:hover{background:rgba(137,194,224,.1)}
+.nav-menu-btn span{display:block;width:22px;height:2px;background:var(--text);border-radius:2px}
+.logo{font-family:'Syne',sans-serif;font-weight:800;font-size:1.35rem;letter-spacing:-.03em;color:var(--text);text-decoration:none;display:flex;align-items:center;gap:8px;flex:1}
+.logo span{color:var(--accent)}
+.logo-dot{width:7px;height:7px;background:var(--accent);border-radius:50%;box-shadow:0 0 12px var(--accent);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(.75)}}
+.nav-links{display:flex;gap:28px;list-style:none;align-items:center}
+.nav-links a{font-size:.875rem;font-weight:500;color:var(--muted);text-decoration:none;transition:color .2s}
+.nav-links a:hover{color:var(--text)}
+.nav-cta{background:var(--accent)!important;color:var(--bg)!important;padding:8px 20px;border-radius:6px;font-weight:600!important}
+.hamburger{display:none;flex-direction:column;gap:5px;cursor:pointer;padding:4px;background:none;border:none}
+.hamburger span{display:block;width:24px;height:2px;background:var(--text);border-radius:2px;transition:all .3s}
+.hamburger.open span:nth-child(1){transform:translateY(7px) rotate(45deg)}
+.hamburger.open span:nth-child(2){opacity:0}
+.hamburger.open span:nth-child(3){transform:translateY(-7px) rotate(-45deg)}
+.mobile-menu{display:none;position:fixed;inset:0;background:rgba(7,16,30,.98);backdrop-filter:blur(20px);z-index:250;flex-direction:column;align-items:center;justify-content:center;gap:36px}
+.mobile-menu.open{display:flex}
+.mobile-menu a{font-family:'Syne',sans-serif;font-size:1.7rem;font-weight:800;color:var(--text);text-decoration:none}
+.mobile-menu a:hover{color:var(--accent)}
+.mobile-menu .m-cta{background:var(--accent);color:var(--bg)!important;padding:14px 40px;border-radius:10px}
+
+/* DRAWER */
+.drawer-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:490;opacity:0;pointer-events:none;transition:opacity .3s}
+.drawer-overlay.open{opacity:1;pointer-events:all}
+.drawer{position:fixed;top:0;left:0;bottom:0;width:var(--dw);background:var(--surface);border-right:1px solid var(--border);z-index:500;transform:translateX(-100%);transition:transform .3s cubic-bezier(.4,0,.2,1);display:flex;flex-direction:column;overflow:hidden}
+.drawer.open{transform:translateX(0)}
+.drawer-head{display:flex;align-items:center;justify-content:space-between;padding:20px;border-bottom:1px solid var(--border);flex-shrink:0}
+.drawer-logo{font-family:'Syne',sans-serif;font-weight:800;font-size:1.1rem;color:var(--text)}
+.drawer-logo span{color:var(--accent)}
+.drawer-close{background:none;border:none;cursor:pointer;color:var(--muted);font-size:20px;padding:4px;border-radius:6px;line-height:1;transition:color .2s,background .2s}
+.drawer-close:hover{color:var(--text);background:rgba(137,194,224,.08)}
+.drawer-body{flex:1;overflow-y:auto;padding:8px 0}
+.drawer-body::-webkit-scrollbar{width:3px}
+.drawer-body::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+.d-section{font-size:.65rem;text-transform:uppercase;letter-spacing:.14em;color:var(--muted);padding:14px 20px 4px;font-weight:600}
+.d-sep{height:1px;background:var(--border);margin:8px 16px}
+.d-item{display:flex;align-items:center;gap:12px;padding:11px 20px;cursor:pointer;font-size:.88rem;font-weight:500;color:var(--text);transition:background .15s,color .15s;text-decoration:none;border:none;background:none;width:100%;text-align:left}
+.d-item:hover{background:rgba(137,194,224,.06);color:var(--accent)}
+.d-item .di{font-size:15px;width:20px;text-align:center;flex-shrink:0}
+.d-item .dl{flex:1}
+.d-item .da{font-size:10px;color:var(--muted);transition:transform .2s}
+.d-item.open .da{transform:rotate(90deg)}
+.d-sub{display:none;border-left:2px solid var(--border);margin:0 20px 4px 28px}
+.d-sub.open{display:block}
+.d-sub-btn{display:flex;align-items:center;gap:10px;padding:9px 10px;cursor:pointer;font-size:.85rem;color:var(--muted);border-radius:8px;transition:background .15s,color .15s;border:none;background:none;width:100%;text-align:left}
+.d-sub-btn:hover{background:rgba(137,194,224,.06);color:var(--text)}
+.d-sub-btn .di{font-size:13px}
+.d-new{background:linear-gradient(135deg,var(--accent),var(--accent3));color:var(--bg)!important;border-radius:0}
+.d-new:hover{opacity:.9;color:var(--bg)!important}
+.drawer-foot{padding:12px 16px;border-top:1px solid var(--border);flex-shrink:0}
+.drawer-foot-txt{font-size:.7rem;color:var(--muted);text-align:center}
+.acct-panel{padding:10px;display:none}
+.acct-panel.open{display:block}
+.acct-av{width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-weight:800;font-size:1.1rem;color:var(--bg);margin:0 auto 10px}
+.acct-nm{font-family:'Syne',sans-serif;font-weight:700;font-size:.9rem;text-align:center;color:var(--text);margin-bottom:2px}
+.acct-st{font-size:.72rem;color:var(--muted);text-align:center;margin-bottom:12px}
+.acct-inp{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:7px;padding:8px 11px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:.83rem;outline:none;margin-bottom:7px;transition:border-color .2s}
+.acct-inp:focus{border-color:var(--accent)}
+.acct-inp::placeholder{color:var(--muted)}
+.acct-save{width:100%;background:var(--accent);color:var(--bg);border:none;border-radius:7px;padding:8px;font-family:'Syne',sans-serif;font-weight:700;font-size:.83rem;cursor:pointer;transition:opacity .2s}
+.acct-save:hover{opacity:.85}
+.theme-row{display:flex;align-items:center;gap:8px;padding:8px 10px 4px;font-size:.75rem;color:var(--muted);font-weight:500}
+.theme-sel{display:flex;border-radius:8px;overflow:hidden;border:1px solid var(--border);margin:0 10px 6px}
+.t-opt{flex:1;padding:7px 2px;font-size:.7rem;font-weight:600;border:none;background:transparent;color:var(--muted);cursor:pointer;transition:background .15s,color .15s;display:flex;flex-direction:column;align-items:center;gap:2px;line-height:1.2}
+.t-opt:not(:last-child){border-right:1px solid var(--border)}
+.t-opt .ti{font-size:14px}
+.t-opt.active{background:rgba(137,194,224,.15);color:var(--accent)}
+.t-opt:hover:not(.active){background:rgba(137,194,224,.07);color:var(--text)}
+.help-panel{padding:10px;display:none}
+.help-panel.open{display:block}
+.faq{border:1px solid var(--border);border-radius:8px;margin-bottom:7px;overflow:hidden}
+.faq-q{padding:10px 13px;font-size:.8rem;font-weight:600;color:var(--text);cursor:pointer;display:flex;align-items:center;justify-content:space-between;transition:background .15s}
+.faq-q:hover{background:rgba(137,194,224,.05)}
+.faq-q .fqa{font-size:9px;color:var(--muted);transition:transform .2s}
+.faq.open .faq-q .fqa{transform:rotate(180deg)}
+.faq-a{display:none;padding:0 13px 10px;font-size:.78rem;color:var(--muted);line-height:1.55}
+.faq.open .faq-a{display:block}
+
+/* PAGE LAYOUT */
+.page{position:relative;z-index:1;display:grid;grid-template-columns:310px 1fr;min-height:100vh;padding-top:80px}
+
+/* SIDEBAR */
+.sidebar{border-right:1px solid var(--border);padding:28px 0;height:calc(100vh - 80px);position:sticky;top:80px;overflow-y:auto}
+.sidebar::-webkit-scrollbar{width:3px}
+.sidebar::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+.sb-head{padding:0 22px 22px;border-bottom:1px solid var(--border)}
+.sb-title{font-family:'Syne',sans-serif;font-size:1.1rem;font-weight:800;letter-spacing:-.03em;margin-bottom:3px}
+.sb-sub{font-size:.78rem;color:var(--muted);font-weight:300}
+.sb-acts{padding:13px 22px;display:flex;gap:8px;border-bottom:1px solid var(--border)}
+.btn-new{display:inline-flex;align-items:center;gap:6px;background:var(--accent);color:var(--bg);padding:8px 13px;border-radius:7px;font-family:'Syne',sans-serif;font-weight:700;font-size:.78rem;text-decoration:none;transition:transform .2s,box-shadow .2s;flex:1;justify-content:center}
+.btn-new:hover{transform:translateY(-1px);box-shadow:0 6px 18px rgba(137,194,224,.28)}
+.btn-clear{background:transparent;border:1px solid var(--border);color:var(--muted);padding:8px 11px;border-radius:7px;font-size:.78rem;font-weight:500;cursor:pointer;transition:all .2s}
+.btn-clear:hover{border-color:rgba(248,113,113,.4);color:var(--red)}
+.rep-list{padding:6px 0}
+.rli{padding:13px 22px;cursor:pointer;transition:background .15s,border-left-color .15s;border-left:3px solid transparent;position:relative}
+.rli:hover{background:rgba(137,194,224,.04);border-left-color:rgba(137,194,224,.28)}
+.rli.active{background:rgba(137,194,224,.07);border-left-color:var(--accent)}
+.rli-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:5px}
+.rli-score{font-family:'Syne',sans-serif;font-weight:800;font-size:.97rem}
+.rli-date{font-size:.7rem;color:var(--muted)}
+.rli-role{font-family:'Syne',sans-serif;font-size:.83rem;font-weight:700;color:var(--text);margin-bottom:3px}
+.rli-sum{font-size:.76rem;color:var(--muted);font-weight:300;line-height:1.4;display:-webkit-box;-webkit-line-clamp:2;line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.rli-del{position:absolute;top:11px;right:11px;background:none;border:none;color:var(--border);cursor:pointer;font-size:13px;padding:3px;border-radius:4px;transition:color .2s,background .2s;opacity:0}
+.rli:hover .rli-del{opacity:1}
+.rli-del:hover{color:var(--red);background:rgba(248,113,113,.1)}
+.sb-empty{padding:36px 22px;text-align:center}
+.sb-empty-ic{font-size:30px;opacity:.35;margin-bottom:10px}
+.sb-empty h4{font-family:'Syne',sans-serif;font-size:.88rem;font-weight:700;margin-bottom:7px}
+.sb-empty p{font-size:.78rem;color:var(--muted);font-weight:300;line-height:1.5;margin-bottom:16px}
+
+/* DETAIL PANE */
+.detail{padding:36px 52px 80px;overflow-y:auto}
+.detail-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:60vh;text-align:center}
+.de-ic{font-size:50px;opacity:.2;margin-bottom:18px}
+.de h2{font-family:'Syne',sans-serif;font-size:1.5rem;font-weight:800;letter-spacing:-.03em;margin-bottom:9px}
+.de p{color:var(--muted);font-size:.92rem;font-weight:300;max-width:320px;line-height:1.6;margin-bottom:24px}
+
+/* REPORT DETAIL */
+.rd{animation:fUp .35s ease both}
+@keyframes fUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+.rd-hdr{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:24px;padding-bottom:22px;border-bottom:1px solid var(--border);flex-wrap:wrap;gap:14px}
+.rd-lbl{font-size:.72rem;text-transform:uppercase;letter-spacing:.15em;color:var(--accent);font-weight:600;margin-bottom:5px}
+.rd-role{font-family:'Syne',sans-serif;font-size:1.65rem;font-weight:800;letter-spacing:-.03em}
+.rd-meta{font-size:.8rem;color:var(--muted);margin-top:4px}
+.rd-file{font-size:.77rem;color:var(--muted);margin-top:2px;display:flex;align-items:center;gap:4px}
+.sc-circ{display:flex;flex-direction:column;align-items:center;justify-content:center;width:86px;height:86px;border-radius:50%;border:3px solid var(--sc,var(--accent));box-shadow:0 0 26px color-mix(in srgb,var(--sc,var(--accent)) 26%,transparent);background:color-mix(in srgb,var(--sc,var(--accent)) 7%,transparent);flex-shrink:0}
+.sc-num{font-family:'Syne',sans-serif;font-size:1.7rem;font-weight:800;color:var(--sc,var(--accent));line-height:1}
+.sc-lbl{font-size:.6rem;text-transform:uppercase;letter-spacing:.1em;color:var(--muted)}
+.sc-grade{font-size:.64rem;font-weight:700;text-transform:uppercase;color:var(--sc,var(--accent));margin-top:2px}
+
+/* Detail actions */
+.rd-acts{display:flex;gap:9px;flex-wrap:wrap;margin-bottom:22px}
+.da-btn{display:inline-flex;align-items:center;gap:7px;padding:9px 16px;border-radius:8px;font-family:'Syne',sans-serif;font-weight:600;font-size:.8rem;cursor:pointer;transition:all .2s;text-decoration:none;border:1px solid var(--border);background:transparent;color:var(--text)}
+.da-btn:hover{border-color:var(--accent);background:rgba(137,194,224,.06);color:var(--text)}
+.da-btn.primary{background:linear-gradient(135deg,var(--accent),#b8d8ec);color:var(--bg);border:none}
+.da-btn.primary:hover{transform:translateY(-1px);box-shadow:0 6px 18px rgba(137,194,224,.28)}
+
+.sum-card{background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--accent);border-radius:12px;padding:18px 22px;margin-bottom:20px;font-size:.91rem;color:var(--muted);line-height:1.7;font-weight:300;font-style:italic}
+.d3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:20px}
+.dc{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:18px}
+.dc-hd{display:flex;align-items:center;gap:8px;margin-bottom:13px}
+.dc-ic{width:27px;height:27px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:13px}
+.ig{background:rgba(74,222,128,.12)}.ir{background:rgba(248,113,113,.12)}.iy{background:rgba(251,191,36,.12)}
+.dc-tl{font-family:'Syne',sans-serif;font-size:.76rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+.di-row{display:flex;align-items:flex-start;gap:8px;padding:7px 0;border-bottom:1px solid rgba(137,194,224,.05);font-size:.82rem;color:var(--text);line-height:1.45;font-weight:300}
+.di-row:last-child{border-bottom:none}
+.di-dot{width:5px;height:5px;border-radius:50%;margin-top:6px;flex-shrink:0}
+.gb{background:#4ade80}.rb{background:#f87171}.yb{background:#fbbf24}
+/* copy btn on suggestions in detail */
+.cp-sug{background:none;border:none;cursor:pointer;color:var(--muted);font-size:12px;padding:2px 5px;border-radius:4px;transition:color .2s,background .2s;flex-shrink:0;line-height:1;margin-left:auto;margin-top:1px}
+.cp-sug:hover{color:var(--accent);background:rgba(137,194,224,.1)}
+.cp-sug.ok{color:var(--green)}
+
+.sk-blk{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px 22px;margin-bottom:20px}
+.sk-tl{font-family:'Syne',sans-serif;font-size:.76rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:13px}
+.sk-wrap{display:flex;flex-wrap:wrap;gap:8px}
+.sk-tag{background:rgba(137,194,224,.07);border:1px solid rgba(137,194,224,.2);color:var(--accent3);padding:5px 13px;border-radius:6px;font-size:.79rem;font-weight:500}
+
+.bars-blk{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px 22px;margin-bottom:20px}
+.bars-tl{font-family:'Syne',sans-serif;font-size:.76rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:18px}
+.bar-r{margin-bottom:14px}
+.bar-l{display:flex;justify-content:space-between;font-size:.8rem;color:var(--text);margin-bottom:6px}
+.bar-t{height:5px;background:var(--surface2);border-radius:3px;overflow:hidden}
+.bar-f{height:100%;border-radius:3px;background:linear-gradient(90deg,var(--accent),var(--accent2))}
+
+/* Score History Chart */
+.chart-blk{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px 22px;margin-bottom:20px}
+.chart-tl{font-family:'Syne',sans-serif;font-size:.76rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:14px}
+.chart-empty{font-size:.8rem;color:var(--muted);text-align:center;padding:18px 0;font-style:italic}
+.chart-svg{width:100%;overflow:visible;display:block}
+
+/* Confirm overlay */
+.conf-ov{display:none;position:fixed;inset:0;background:rgba(7,16,30,.82);backdrop-filter:blur(6px);z-index:500;align-items:center;justify-content:center}
+.conf-ov.on{display:flex}
+.conf-box{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:34px;max-width:360px;width:90%;text-align:center}
+.conf-box h3{font-family:'Syne',sans-serif;font-size:1.05rem;font-weight:800;margin-bottom:9px}
+.conf-box p{color:var(--muted);font-size:.86rem;font-weight:300;margin-bottom:26px;line-height:1.5}
+.conf-btns{display:flex;gap:11px;justify-content:center}
+.btn-cancel{background:transparent;border:1px solid var(--border);color:var(--text);padding:9px 20px;border-radius:8px;font-family:'Syne',sans-serif;font-weight:600;font-size:.86rem;cursor:pointer;transition:all .2s}
+.btn-cancel:hover{border-color:var(--accent)}
+.btn-del{background:rgba(248,113,113,.14);border:1px solid rgba(248,113,113,.28);color:var(--red);padding:9px 20px;border-radius:8px;font-family:'Syne',sans-serif;font-weight:700;font-size:.86rem;cursor:pointer;transition:all .2s}
+.btn-del:hover{background:rgba(248,113,113,.22)}
+
+footer{position:relative;z-index:1;padding:30px 52px;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.fl{font-family:'Syne',sans-serif;font-weight:800;font-size:.97rem}
+.fl span{color:var(--accent)}
+.flinks{display:flex;gap:20px}
+.flinks a{font-size:.78rem;color:var(--muted);text-decoration:none;transition:color .2s}
+.flinks a:hover{color:var(--text)}
+
+::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:var(--bg)}::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+
+@media print{
+  body{background:#fff!important;color:#111!important}
+  nav,.sidebar,footer,.rd-acts,.conf-ov,.mobile-menu,.hamburger,.rli-del,.drawer,.drawer-overlay,.chart-blk{display:none!important}
+  body::before,body::after{display:none!important}
+  .page{display:block;padding-top:0}
+  .detail{padding:20px!important}
+  .rd-hdr,.sum-card,.d3,.dc,.sk-blk,.bars-blk{border:1px solid #ddd!important;background:#f9f9f9!important}
+  .rd-role,.rd-lbl,.dc-tl,.bars-tl,.sk-tl,.chart-tl{color:#111!important}
+  .di-row,.rd-meta,.rd-file,.sum-card{color:#444!important}
+  .sc-circ{border-color:#333!important;background:#f0f0f0!important}
+  .sc-num{color:#111!important}
+  .bar-f{background:#555!important}
+  .sk-tag{background:#eee!important;border-color:#ccc!important;color:#333!important}
+  .d3{grid-template-columns:1fr 1fr 1fr}
+}
+
+@media(max-width:900px){
+  .page{grid-template-columns:1fr}
+  .sidebar{height:auto;position:static;border-right:none;border-bottom:1px solid var(--border)}
+  .detail{padding:26px 18px 60px}
+  .d3{grid-template-columns:1fr}
+  nav{padding:14px 20px}.nav-links{display:none}.hamburger{display:flex}
+  footer{flex-direction:column;gap:11px;text-align:center;padding:22px}
+}
+.nav-links a.nav-active{color:var(--text)!important;font-weight:600}
+.nav-links a.nav-active::after{content:'';display:block;height:2px;background:var(--accent);border-radius:1px;margin-top:2px}
+.rep-badge{display:inline-flex;align-items:center;justify-content:center;background:var(--accent);color:var(--bg);font-size:.65rem;font-weight:800;border-radius:100px;padding:1px 6px;margin-left:5px;min-width:18px;line-height:1.5;vertical-align:middle}
+.scroll-top{position:fixed;bottom:28px;right:28px;width:42px;height:42px;border-radius:50%;background:var(--surface);border:1px solid var(--border);color:var(--accent);font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:200;opacity:0;transform:translateY(12px);transition:opacity .3s,transform .3s,box-shadow .2s,background .2s;pointer-events:none;box-shadow:0 4px 16px rgba(0,0,0,.3)}
+.scroll-top.visible{opacity:1;transform:translateY(0);pointer-events:all}
+.scroll-top:hover{background:var(--accent);color:var(--bg);box-shadow:0 6px 20px rgba(137,194,224,.35)}
+</style>
+</head>
+<body>
+
+<!-- DRAWER -->
+<div class="drawer-overlay" id="dOv" onclick="closeDrawer()"></div>
+<button class="scroll-top" id="scrollTop" onclick="window.scrollTo({top:0,behavior:'smooth'})" title="Back to top">↑</button>
+<div class="drawer" id="drawer">
+  <div class="drawer-head">
+    <div class="drawer-logo">Resume<span>IQ</span></div>
+    <button class="drawer-close" onclick="closeDrawer()">✕</button>
+  </div>
+  <div class="drawer-body">
+    <div class="d-section">Quick Actions</div>
+    <button class="d-item d-new" onclick="handleNewReport()"><span class="di">📝</span><span class="dl">New Report</span></button>
+    <div class="d-sep"></div>
+    <div class="d-section">Navigate</div>
+    <a href="index.html" class="d-item"><span class="di">🏠</span><span class="dl">Home</span></a>
+    <a href="analyzer.html" class="d-item"><span class="di">🔍</span><span class="dl">Analyze Resume</span></a>
+    <a href="report.html" class="d-item"><span class="di">📋</span><span class="dl">My Reports</span></a>
+    <div class="d-sep"></div>
+    <div class="d-section">Settings</div>
+    <button class="d-item" id="setBtn" onclick="toggleSub('setBtn','setSub')"><span class="di">⚙️</span><span class="dl">Settings</span><span class="da">▶</span></button>
+    <div class="d-sub" id="setSub">
+      <button class="d-sub-btn" onclick="toggleSub('','acctPanel')"><span class="di">👤</span> Your Account</button>
+      <div class="acct-panel" id="acctPanel">
+        <div class="acct-av" id="acctAv">?</div>
+        <div class="acct-nm" id="acctNm">Guest User</div>
+        <div class="acct-st" id="acctSt">0 analyses done</div>
+        <input class="acct-inp" id="acctName" placeholder="Your name…" maxlength="30"/>
+        <input class="acct-inp" id="acctEmail" placeholder="Email (optional)…" maxlength="60"/>
+        <button class="acct-save" onclick="saveAccount()">Save</button>
+      </div>
+      <div class="theme-row"><span>🌓</span> Theme</div>
+      <div class="theme-sel">
+        <button class="t-opt" data-t="light" onclick="setTheme('light')"><span class="ti">🌞</span>Light</button>
+        <button class="t-opt" data-t="system" onclick="setTheme('system')"><span class="ti">💻</span>System</button>
+        <button class="t-opt" data-t="dark" onclick="setTheme('dark')"><span class="ti">🌙</span>Dark</button>
+      </div>
+      <button class="d-sub-btn" onclick="toggleSub('','helpPanel')"><span class="di">❓</span> Get Help</button>
+      <div class="help-panel" id="helpPanel">
+        <div class="faq" onclick="this.classList.toggle('open')"><div class="faq-q">How do I analyze my resume?<span class="fqa">▼</span></div><div class="faq-a">Go to Analyzer, upload a PDF or DOCX, type your job role, click Analyze Now.</div></div>
+        <div class="faq" onclick="this.classList.toggle('open')"><div class="faq-q">Where are my reports saved?<span class="fqa">▼</span></div><div class="faq-a">Reports are stored in your browser's local storage — on this device only.</div></div>
+        <div class="faq" onclick="this.classList.toggle('open')"><div class="faq-q">Is my data stored online?<span class="fqa">▼</span></div><div class="faq-a">No. Resume text is used only for the AI analysis and never stored on any server.</div></div>
+        <div class="faq" onclick="this.classList.toggle('open')"><div class="faq-q">How do I export a report?<span class="fqa">▼</span></div><div class="faq-a">Click "Print / Export PDF" inside any report to open your browser's print dialog, then save as PDF.</div></div>
+        <div class="faq" onclick="this.classList.toggle('open')"><div class="faq-q">How do I share a report?<span class="fqa">▼</span></div><div class="faq-a">Click the "Share" button inside a report. It copies a link to your clipboard that anyone can open.</div></div>
+      </div>
+    </div>
+  </div>
+  <div class="drawer-foot"><div class="drawer-foot-txt">ResumeIQ · All data stored locally in your browser</div></div>
+</div>
+
+<nav>
+  <button class="nav-menu-btn" onclick="openDrawer()"><span></span><span></span><span></span></button>
+  <a href="index.html" class="logo"><div class="logo-dot"></div>Resume<span>IQ</span></a>
+  <ul class="nav-links">
+    <li><a href="index.html">Home</a></li>
+    <li><a href="report.html" class="nav-active">📋 My Reports</a></li>
+    <li><a href="analyzer.html" class="nav-cta">+ New Analysis</a></li>
+  </ul>
+  <button class="hamburger" id="hbg"><span></span><span></span><span></span></button>
+</nav>
+<div class="mobile-menu" id="mobMenu">
+  <a href="index.html" onclick="closeMob()">Home</a>
+  <a href="analyzer.html" class="m-cta">+ New Analysis</a>
+</div>
+
+<div class="page">
+  <aside class="sidebar">
+    <div class="sb-head">
+      <div class="sb-title">My Reports</div>
+      <div class="sb-sub" id="sbSub">Loading…</div>
+    </div>
+    <div class="sb-acts">
+      <a href="analyzer.html" class="btn-new">⚡ New Analysis</a>
+      <button class="btn-clear" onclick="askClearAll()">Clear All</button>
+    </div>
+    <div class="rep-list" id="repList"></div>
+  </aside>
+
+  <main class="detail" id="detPane">
+    <div class="detail-empty" id="detEmpty">
+      <div class="de-ic">📊</div>
+      <div class="de">
+        <h2>Select a Report</h2>
+        <p>Choose a report from the list to view the full analysis and breakdown.</p>
+        <a href="analyzer.html" class="btn-new" style="display:inline-flex;padding:12px 24px;border-radius:8px;font-size:.88rem">⚡ Analyze a Resume</a>
+      </div>
+    </div>
+    <div id="detContent" style="display:none"></div>
+  </main>
+</div>
+
+<footer>
+  <div class="fl">Resume<span>IQ</span></div>
+  <div class="flinks">
+    <a href="index.html">Home</a>
+    <a href="analyzer.html">Analyzer</a>
+    <a href="index.html#how">How It Works</a>
+  </div>
+</footer>
+
+<div class="conf-ov" id="confOv">
+  <div class="conf-box">
+    <h3 id="confTitle">Delete Report?</h3>
+    <p id="confMsg">This will permanently remove this report. This cannot be undone.</p>
+    <div class="conf-btns">
+      <button class="btn-cancel" onclick="closeConf()">Cancel</button>
+      <button class="btn-del" id="confOk">Delete</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── Theme 3-mode (before paint) ───────────────────────────────────
+(function(){
+  var m=localStorage.getItem('riq_theme')||'dark';
+  if(m==='light') document.body.classList.add('light');
+  else if(m==='system'&&!window.matchMedia('(prefers-color-scheme: dark)').matches) document.body.classList.add('light');
+})();
+function applyTheme(m){
+  if(m==='light') document.body.classList.add('light');
+  else if(m==='dark') document.body.classList.remove('light');
+  else document.body.classList.toggle('light',!window.matchMedia('(prefers-color-scheme: dark)').matches);
+}
+function setTheme(m){
+  localStorage.setItem('riq_theme',m);applyTheme(m);
+  document.querySelectorAll('.t-opt').forEach(function(b){b.classList.toggle('active',b.dataset.t===m);});
+}
+(function(){
+  var m=localStorage.getItem('riq_theme')||'dark';applyTheme(m);
+  document.querySelectorAll('.t-opt').forEach(function(b){b.classList.toggle('active',b.dataset.t===m);});
+  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change',function(){
+    if((localStorage.getItem('riq_theme')||'dark')==='system') applyTheme('system');
+  });
+})();
+
+// ── Drawer ────────────────────────────────────────────────────────
+function openDrawer(){document.getElementById('drawer').classList.add('open');document.getElementById('dOv').classList.add('open');document.body.style.overflow='hidden';loadAcct();}
+function closeDrawer(){document.getElementById('drawer').classList.remove('open');document.getElementById('dOv').classList.remove('open');document.body.style.overflow='';}
+function toggleSub(btnId,subId){
+  if(btnId){var b=document.getElementById(btnId);if(b)b.classList.toggle('open');}
+  var s=document.getElementById(subId);if(s)s.classList.toggle('open');
+}
+function loadAcct(){
+  var n=localStorage.getItem('riq_name')||'';
+  var cnt=parseInt(localStorage.getItem('riq_count')||'0');
+  document.getElementById('acctName').value=n;
+  document.getElementById('acctEmail').value=localStorage.getItem('riq_email')||'';
+  document.getElementById('acctNm').textContent=n||'Guest User';
+  document.getElementById('acctAv').textContent=n?n[0].toUpperCase():'?';
+  document.getElementById('acctSt').textContent=cnt+' anal'+(cnt===1?'ysis':'yses')+' done';
+}
+function saveAccount(){
+  var n=document.getElementById('acctName').value.trim();
+  var e=document.getElementById('acctEmail').value.trim();
+  if(n)localStorage.setItem('riq_name',n);if(e)localStorage.setItem('riq_email',e);
+  loadAcct();document.getElementById('acctPanel').classList.remove('open');
+}
+
+// ── New Report ────────────────────────────────────────────────────
+function handleNewReport(){
+  var reps=JSON.parse(localStorage.getItem('riq_reports')||'[]');
+  if(reps.length>0){
+    var l=reps.slice().reverse()[0];
+    if(!dlReport(l))alert('Previous updated report downloaded.');
+    localStorage.removeItem('riq_reports');
+  }
+  closeDrawer();setTimeout(function(){window.location.href='analyzer.html';},350);
+}
+function dlReport(r){
+  try{
+    var t=['ResumeIQ — Resume Analysis Report','='.repeat(40),'Role: '+r.jobRole,'Score: '+r.score+'/100','Date: '+new Date(r.timestamp).toLocaleString(),'','SUMMARY',r.summary,'','STRENGTHS',(r.strengths||[]).map(function(s,i){return (i+1)+'. '+s;}).join('\n'),'','WEAKNESSES',(r.weaknesses||[]).map(function(s,i){return (i+1)+'. '+s;}).join('\n'),'','SUGGESTIONS',(r.suggestions||[]).map(function(s,i){return (i+1)+'. '+s;}).join('\n'),'','MISSING SKILLS',(r.missing_skills||[]).join(', ')].join('\n');
+    var b=new Blob([t],{type:'text/plain'});var a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='ResumeIQ_'+r.jobRole.replace(/\s+/g,'_')+'.txt';a.click();return true;
+  }catch(e){return false;}
+}
+
+// ── Hamburger ─────────────────────────────────────────────────────
+var hbg=document.getElementById('hbg'),mob=document.getElementById('mobMenu');
+hbg.addEventListener('click',function(){hbg.classList.toggle('open');mob.classList.toggle('open');document.body.style.overflow=mob.classList.contains('open')?'hidden':'';});
+function closeMob(){hbg.classList.remove('open');mob.classList.remove('open');document.body.style.overflow='';}
+
+// ── Score helpers ─────────────────────────────────────────────────
+function scCol(s){return s>=80?'#4ade80':s>=50?'#fbbf24':'#f87171';}
+function scGrd(s){return s>=90?'Excellent':s>=80?'Strong':s>=65?'Good':s>=50?'Fair':'Needs Work';}
+
+// ── Data ──────────────────────────────────────────────────────────
+var reports=JSON.parse(localStorage.getItem('riq_reports')||'[]');
+var activeId=null,pendingId=null;
+
+// ── Score History Chart ───────────────────────────────────────────
+function buildChart(){
+  if(reports.length<2) return '<div class="chart-empty">Analyze more resumes to see your score trend here.</div>';
+  var sorted=reports.slice().sort(function(a,b){return a.timestamp-b.timestamp;});
+  var scores=sorted.map(function(r){return r.score;});
+  var labels=sorted.map(function(r){return new Date(r.timestamp).toLocaleDateString('en-IN',{day:'numeric',month:'short'});});
+  var W=320,H=110,pad=22,n=scores.length;
+  var minS=Math.max(0,Math.min.apply(null,scores)-10),maxS=100;
+  var xs=scores.map(function(_,i){return pad+i*(W-pad*2)/(n-1||1);});
+  var ys=scores.map(function(s){return H-pad-(s-minS)/(maxS-minS||1)*(H-pad*2);});
+  var path='M'+xs[0]+','+ys[0];
+  for(var i=1;i<n;i++) path+=' L'+xs[i]+','+ys[i];
+  var dots='',xlbls='';
+  for(var j=0;j<n;j++){
+    dots+='<circle cx="'+xs[j]+'" cy="'+ys[j]+'" r="4" fill="var(--accent)" stroke="var(--surface)" stroke-width="2"/>';
+    dots+='<text x="'+xs[j]+'" y="'+(ys[j]-9)+'" text-anchor="middle" font-size="10" fill="var(--muted)">'+scores[j]+'</text>';
+    xlbls+='<text x="'+xs[j]+'" y="'+(H-3)+'" text-anchor="middle" font-size="8" fill="var(--muted)">'+labels[j]+'</text>';
+  }
+  return '<svg class="chart-svg" viewBox="0 0 '+W+' '+H+'" xmlns="http://www.w3.org/2000/svg">'
+    +'<path d="'+path+'" fill="none" stroke="var(--accent)" stroke-width="2" opacity=".85"/>'
+    +dots+xlbls+'</svg>';
+}
+
+// ── Sidebar ───────────────────────────────────────────────────────
+function renderSidebar(){
+  var sub=document.getElementById('sbSub');
+  sub.textContent=reports.length===0?'No reports saved yet':reports.length+' report'+(reports.length===1?'':'s')+' saved';
+  var list=document.getElementById('repList');
+  if(!reports.length){
+    list.innerHTML='<div class="sb-empty"><div class="sb-empty-ic">📋</div><h4>No reports yet</h4><p>Analyze a resume to save your first report.</p><a href="analyzer.html" class="btn-new" style="display:inline-flex;justify-content:center">⚡ Analyze Now</a></div>';
+    return;
+  }
+  var sorted=reports.slice().reverse();
+  list.innerHTML=sorted.map(function(r){
+    var col=scCol(r.score);
+    return '<div class="rli'+(r.id===activeId?' active':'')+'" onclick="selectReport(\''+r.id+'\')">'
+      +'<div class="rli-top"><div class="rli-score" style="color:'+col+'">'+r.score+'/100</div><div class="rli-date">'+new Date(r.timestamp).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'})+'</div></div>'
+      +'<div class="rli-role">'+r.jobRole+'</div>'
+      +'<div class="rli-sum">'+r.summary+'</div>'
+      +'<button class="rli-del" title="Delete" onclick="askDelete(event,\''+r.id+'\')">✕</button>'
+      +'</div>';
+  }).join('');
+}
+
+// ── Select Report ─────────────────────────────────────────────────
+function selectReport(id){
+  activeId=id;renderSidebar();
+  var r=reports.find(function(x){return x.id===id;});
+  if(!r)return;
+  document.getElementById('detEmpty').style.display='none';
+  var det=document.getElementById('detContent');det.style.display='block';
+
+  var col=scCol(r.score),grd=scGrd(r.score);
+
+  function mkItems(arr,cls){
+    return (arr||[]).map(function(t){
+      return '<div class="di-row"><div class="di-dot '+cls+'"></div><div>'+t+'</div></div>';
+    }).join('');
+  }
+  function mkSugs(arr){
+    return (arr||[]).map(function(t){
+      var safe=t.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+      return '<div class="di-row"><div class="di-dot yb"></div><div style="flex:1">'+t+'</div><button class="cp-sug" title="Copy" onclick="cpSug(\''+safe+'\',this)">⧉</button></div>';
+    }).join('');
+  }
+  function barRow(lbl,pct){
+    pct=Math.min(100,Math.max(0,pct));
+    return '<div class="bar-r"><div class="bar-l"><span>'+lbl+'</span><span>'+pct+'%</span></div><div class="bar-t"><div class="bar-f" style="width:'+pct+'%"></div></div></div>';
+  }
+
+  var fileHtml=r.fileName?'<div class="rd-file">📄 '+r.fileName+'</div>':'';
+
+  det.innerHTML='<div class="rd">'
+    +'<div class="rd-hdr">'
+      +'<div><div class="rd-lbl">— Resume Analysis</div><div class="rd-role">'+r.jobRole+'</div>'
+      +'<div class="rd-meta">'+new Date(r.timestamp).toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'long',year:'numeric'})+' · '+new Date(r.timestamp).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'})+'</div>'
+      +fileHtml+'</div>'
+      +'<div class="sc-circ" style="--sc:'+col+'"><div class="sc-num">'+r.score+'</div><div class="sc-lbl">/ 100</div><div class="sc-grade">'+grd+'</div></div>'
+    +'</div>'
+    +'<div class="rd-acts">'
+      +'<button class="da-btn primary" onclick="window.print()">🖨️ Print / Export PDF</button>'
+      +'<a href="analyzer.html" class="da-btn">⚡ New Analysis</a>'
+      +'<button class="da-btn" id="shareBtn" onclick="shareReport(\''+r.id+'\')">🔗 Share</button>'
+      +'<button class="da-btn" onclick="askDelete(event,\''+r.id+'\')">🗑️ Delete</button>'
+    +'</div>'
+    +'<div class="sum-card">'+r.summary+'</div>'
+    +'<div class="d3">'
+      +'<div class="dc"><div class="dc-hd"><div class="dc-ic ig">✅</div><div class="dc-tl">Strengths</div></div>'+mkItems(r.strengths,'gb')+'</div>'
+      +'<div class="dc"><div class="dc-hd"><div class="dc-ic ir">⚠️</div><div class="dc-tl">Weaknesses</div></div>'+mkItems(r.weaknesses,'rb')+'</div>'
+      +'<div class="dc"><div class="dc-hd"><div class="dc-ic iy">💡</div><div class="dc-tl">Suggestions</div></div>'+mkSugs(r.suggestions)+'</div>'
+    +'</div>'
+    +'<div class="sk-blk"><div class="sk-tl">🔧 Missing Skills to Add</div><div class="sk-wrap">'+(r.missing_skills||[]).map(function(s){return '<div class="sk-tag">'+s+'</div>';}).join('')+'</div></div>'
+    +'<div class="bars-blk"><div class="bars-tl">📊 Score Breakdown</div>'
+      +barRow('Content Quality',r.content_quality||r.score)
+      +barRow('Skills Match',r.skills_match||Math.max(0,r.score-10))
+      +barRow('Structure & Format',r.structure_format||Math.min(100,r.score+5))
+      +barRow('ATS Compatibility',r.ats_compatibility||Math.max(0,r.score-15))
+    +'</div>'
+    +'<div class="chart-blk"><div class="chart-tl">📈 Score History</div>'+buildChart()+'</div>'
+    +'</div>';
+
+  document.getElementById('detPane').scrollTo({top:0,behavior:'smooth'});
+
+  // ── Animation 10: Tilt the three detail cards ──
+  setTimeout(function(){
+    document.querySelectorAll('#detContent .dc').forEach(function(card){
+      card.style.willChange = 'transform';
+      card.addEventListener('mousemove', function(e){
+        var r  = card.getBoundingClientRect();
+        var dx = (e.clientX - (r.left + r.width  / 2)) / (r.width  / 2);
+        var dy = (e.clientY - (r.top  + r.height / 2)) / (r.height / 2);
+        card.style.transition = 'transform .08s ease,border-color .25s';
+        card.style.transform  =
+          'perspective(600px) rotateX('+(-dy*8)+'deg) rotateY('+(dx*8)+'deg) translateY(-4px) scale(1.015)';
+      });
+      card.addEventListener('mouseleave', function(){
+        card.style.transition = 'transform .4s cubic-bezier(.22,1,.36,1),border-color .25s';
+        card.style.transform  = 'perspective(600px) rotateX(0deg) rotateY(0deg) translateY(0) scale(1)';
+      });
+    });
+  }, 50); // small delay to ensure DOM is painted
+}
+
+// ── Copy suggestion ───────────────────────────────────────────────
+function cpSug(text,btn){
+  navigator.clipboard.writeText(text).then(function(){btn.classList.add('ok');btn.textContent='✓';setTimeout(function(){btn.classList.remove('ok');btn.textContent='⧉';},1800);}).catch(function(){});
+}
+
+// ── Share Report ──────────────────────────────────────────────────
+function shareReport(id){
+  var r=reports.find(function(x){return x.id===id;});
+  if(!r)return;
+  try{
+    var encoded=btoa(encodeURIComponent(JSON.stringify(r)));
+    var url=window.location.origin+window.location.pathname+'?share='+encoded;
+    navigator.clipboard.writeText(url).then(function(){
+      var btn=document.getElementById('shareBtn');
+      if(btn){var orig=btn.textContent;btn.textContent='✅ Copied!';setTimeout(function(){btn.textContent=orig;},2500);}
+    });
+  }catch(e){alert('Could not generate share link.');}
+}
+
+// ── Handle ?share= param ──────────────────────────────────────────
+function handleShare(){
+  var shareData=new URLSearchParams(window.location.search).get('share');
+  if(!shareData)return null;
+  try{
+    var r=JSON.parse(decodeURIComponent(atob(shareData)));
+    r.id=r.id||'shared_'+Date.now();
+    if(!reports.find(function(x){return x.id===r.id;})){
+      reports.push(r);
+      localStorage.setItem('riq_reports',JSON.stringify(reports));
+    }
+    return r.id;
+  }catch(e){return null;}
+}
+
+// ── Delete ────────────────────────────────────────────────────────
+function askDelete(e,id){
+  if(e)e.stopPropagation();
+  pendingId=id;
+  document.getElementById('confTitle').textContent='Delete Report?';
+  document.getElementById('confMsg').textContent='This will permanently remove this report. This cannot be undone.';
+  document.getElementById('confOk').onclick=doDelete;
+  document.getElementById('confOv').classList.add('on');
+}
+function doDelete(){
+  reports=reports.filter(function(r){return r.id!==pendingId;});
+  localStorage.setItem('riq_reports',JSON.stringify(reports));
+  if(activeId===pendingId){activeId=null;document.getElementById('detEmpty').style.display='';document.getElementById('detContent').style.display='none';}
+  closeConf();renderSidebar();
+}
+function askClearAll(){
+  if(!reports.length)return;
+  document.getElementById('confTitle').textContent='Clear All Reports?';
+  document.getElementById('confMsg').textContent='This will permanently delete all '+reports.length+' saved reports. This cannot be undone.';
+  document.getElementById('confOk').onclick=function(){
+    reports=[];localStorage.removeItem('riq_reports');activeId=null;
+    document.getElementById('detEmpty').style.display='';document.getElementById('detContent').style.display='none';
+    closeConf();renderSidebar();
+  };
+  document.getElementById('confOv').classList.add('on');
+}
+function closeConf(){pendingId=null;document.getElementById('confOv').classList.remove('on');}
+document.getElementById('confOv').addEventListener('click',function(e){if(e.target===e.currentTarget)closeConf();});
+
+// ── Init ──────────────────────────────────────────────────────────
+function init(){
+  renderSidebar();
+  var shareId=handleShare();
+  var urlId=new URLSearchParams(window.location.search).get('id');
+  var target=shareId||urlId;
+  if(target&&reports.find(function(r){return r.id===target;})) selectReport(target);
+  else if(reports.length) selectReport(reports.slice().reverse()[0].id);
+}
+// ── Escape closes drawer / mobile menu ───────────────────────────
+document.addEventListener('keydown',function(e){
+  if(e.key==='Escape'){ closeDrawer(); closeMob(); }
+});
+
+// ── Active nav link (auto-detect) ─────────────────────────────────
+(function(){
+  var page=location.pathname.split('/').pop()||'index.html';
+  document.querySelectorAll('.nav-links a').forEach(function(a){
+    var href=(a.getAttribute('href')||'').split('#')[0].split('/').pop();
+    if(href && href===page && !a.classList.contains('nav-cta')) a.classList.add('nav-active');
+  });
+})();
+
+// ── Report count badge ────────────────────────────────────────────
+(function(){
+  var badge=document.getElementById('navRepBadge');
+  if(!badge) return;
+  var count=reports.length;
+  if(count>0){badge.textContent=count;badge.style.display='inline-flex';}
+})();
+
+// ── Scroll-to-top: listens to detail pane scroll (not window) ────
+(function(){
+  var btn  = document.getElementById('scrollTop');
+  var pane = document.getElementById('detPane');
+  if(!btn || !pane) return;
+
+  // update button when detail pane scrolls
+  pane.addEventListener('scroll', function(){
+    btn.classList.toggle('visible', pane.scrollTop > 80);
+  }, {passive:true});
+
+  // also catch window scroll (mobile single-column layout)
+  window.addEventListener('scroll', function(){
+    btn.classList.toggle('visible', window.scrollY > 80);
+  }, {passive:true});
+
+  // clicking scrolls the detail pane to top (desktop) or window (mobile)
+  btn.onclick = function(){
+    pane.scrollTo({top:0, behavior:'smooth'});
+    window.scrollTo({top:0, behavior:'smooth'});
+  };
+})();
+
+init();
+</script>
+</body>
+</html>

@@ -1,0 +1,693 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>ResumeIQ — AI Resume Analyzer</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📄</text></svg>"/>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#07101e;--surface:#0d1a2d;--surface2:#122038;--border:#1c3050;
+  --accent:#89c2e0;--accent2:#5294b5;--accent3:#b8d8ec;
+  --text:#d8eaf7;--muted:#456b85;
+  --green:#4ade80;--yellow:#fbbf24;--red:#f87171;
+  --glow:0 0 40px rgba(137,194,224,.12);--drawer-w:300px;
+}
+body.light{
+  --bg:#f0f5fa;--surface:#fff;--surface2:#e8f0f8;--border:#c5d6e8;
+  --accent:#1a6fa0;--accent2:#1558a0;--accent3:#1a6fa0;
+  --text:#0a1929;--muted:#4a6a88;
+}
+html{scroll-behavior:smooth}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);overflow-x:hidden;transition:background .25s,color .25s}
+body::before{content:'';position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='4'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.035'/%3E%3C/svg%3E");pointer-events:none;z-index:0;opacity:.5}
+body::after{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(137,194,224,.035) 1px,transparent 1px),linear-gradient(90deg,rgba(137,194,224,.035) 1px,transparent 1px);background-size:60px 60px;pointer-events:none;z-index:0}
+
+/* ── NAV ── */
+nav{position:fixed;top:0;left:0;right:0;z-index:300;display:flex;align-items:center;gap:14px;padding:16px 48px;background:rgba(7,16,30,.92);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);transition:background .25s}
+body.light nav{background:rgba(240,245,250,.95)}
+.nav-menu-btn{background:none;border:none;cursor:pointer;display:flex;flex-direction:column;gap:5px;padding:6px;border-radius:7px;transition:background .2s;flex-shrink:0}
+.nav-menu-btn:hover{background:rgba(137,194,224,.1)}
+.nav-menu-btn span{display:block;width:22px;height:2px;background:var(--text);border-radius:2px;transition:background .2s}
+.logo{font-family:'Syne',sans-serif;font-weight:800;font-size:1.35rem;letter-spacing:-.03em;color:var(--text);text-decoration:none;display:flex;align-items:center;gap:8px;flex:1}
+.logo span{color:var(--accent)}
+.logo-dot{width:7px;height:7px;background:var(--accent);border-radius:50%;box-shadow:0 0 12px var(--accent);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(.75)}}
+.nav-links{display:flex;gap:28px;list-style:none;align-items:center}
+.nav-links a{font-size:.875rem;font-weight:500;color:var(--muted);text-decoration:none;transition:color .2s}
+.nav-links a:hover{color:var(--text)}
+.nav-cta{background:var(--accent)!important;color:var(--bg)!important;padding:8px 20px;border-radius:6px;font-weight:600!important;transition:box-shadow .2s,transform .2s!important}
+.nav-cta:hover{box-shadow:0 0 22px rgba(137,194,224,.4)!important;transform:translateY(-1px)}
+.hamburger{display:none;flex-direction:column;gap:5px;cursor:pointer;padding:4px;background:none;border:none}
+.hamburger span{display:block;width:24px;height:2px;background:var(--text);border-radius:2px;transition:all .3s}
+.hamburger.open span:nth-child(1){transform:translateY(7px) rotate(45deg)}
+.hamburger.open span:nth-child(2){opacity:0}
+.hamburger.open span:nth-child(3){transform:translateY(-7px) rotate(-45deg)}
+.mobile-menu{display:none;position:fixed;inset:0;background:rgba(7,16,30,.98);backdrop-filter:blur(20px);z-index:250;flex-direction:column;align-items:center;justify-content:center;gap:36px}
+.mobile-menu.open{display:flex}
+.mobile-menu a{font-family:'Syne',sans-serif;font-size:1.7rem;font-weight:800;color:var(--text);text-decoration:none;transition:color .2s}
+.mobile-menu a:hover{color:var(--accent)}
+.mobile-menu .m-cta{background:var(--accent);color:var(--bg)!important;padding:14px 40px;border-radius:10px}
+
+/* ── DRAWER ── */
+.drawer-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:490;opacity:0;pointer-events:none;transition:opacity .3s}
+.drawer-overlay.open{opacity:1;pointer-events:all}
+.drawer{position:fixed;top:0;left:0;bottom:0;width:var(--drawer-w);background:var(--surface);border-right:1px solid var(--border);z-index:500;transform:translateX(-100%);transition:transform .3s cubic-bezier(.4,0,.2,1);display:flex;flex-direction:column;overflow:hidden}
+.drawer.open{transform:translateX(0)}
+.drawer-head{display:flex;align-items:center;justify-content:space-between;padding:20px;border-bottom:1px solid var(--border);flex-shrink:0}
+.drawer-logo{font-family:'Syne',sans-serif;font-weight:800;font-size:1.1rem;color:var(--text)}
+.drawer-logo span{color:var(--accent)}
+.drawer-close{background:none;border:none;cursor:pointer;color:var(--muted);font-size:20px;padding:4px;border-radius:6px;line-height:1;transition:color .2s,background .2s}
+.drawer-close:hover{color:var(--text);background:rgba(137,194,224,.08)}
+.drawer-body{flex:1;overflow-y:auto;padding:8px 0}
+.drawer-body::-webkit-scrollbar{width:3px}
+.drawer-body::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+.d-section{font-size:.65rem;text-transform:uppercase;letter-spacing:.14em;color:var(--muted);padding:14px 20px 4px;font-weight:600}
+.d-sep{height:1px;background:var(--border);margin:8px 16px}
+.d-item{display:flex;align-items:center;gap:12px;padding:11px 20px;cursor:pointer;font-size:.88rem;font-weight:500;color:var(--text);transition:background .15s,color .15s;text-decoration:none;border:none;background:none;width:100%;text-align:left}
+.d-item:hover{background:rgba(137,194,224,.06);color:var(--accent)}
+.d-item .di{font-size:15px;width:20px;text-align:center;flex-shrink:0}
+.d-item .dl{flex:1}
+.d-item .da{font-size:10px;color:var(--muted);transition:transform .2s}
+.d-item.open .da{transform:rotate(90deg)}
+.d-sub{display:none;border-left:2px solid var(--border);margin:0 20px 4px 28px}
+.d-sub.open{display:block}
+.d-sub-btn{display:flex;align-items:center;gap:10px;padding:9px 10px;cursor:pointer;font-size:.85rem;color:var(--muted);border-radius:8px;transition:background .15s,color .15s;border:none;background:none;width:100%;text-align:left}
+.d-sub-btn:hover{background:rgba(137,194,224,.06);color:var(--text)}
+.d-sub-btn .di{font-size:13px}
+.d-new{background:linear-gradient(135deg,var(--accent),var(--accent3));color:var(--bg)!important;border-radius:0}
+.d-new:hover{opacity:.9;color:var(--bg)!important}
+.drawer-foot{padding:12px 16px;border-top:1px solid var(--border);flex-shrink:0}
+.drawer-foot-txt{font-size:.7rem;color:var(--muted);text-align:center}
+
+/* Account panel */
+.acct-panel{padding:10px;display:none}
+.acct-panel.open{display:block}
+.acct-av{width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-weight:800;font-size:1.1rem;color:var(--bg);margin:0 auto 10px}
+.acct-nm{font-family:'Syne',sans-serif;font-weight:700;font-size:.9rem;text-align:center;color:var(--text);margin-bottom:2px}
+.acct-st{font-size:.72rem;color:var(--muted);text-align:center;margin-bottom:12px}
+.acct-inp{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:7px;padding:8px 11px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:.83rem;outline:none;margin-bottom:7px;transition:border-color .2s}
+.acct-inp:focus{border-color:var(--accent)}
+.acct-inp::placeholder{color:var(--muted)}
+.acct-save{width:100%;background:var(--accent);color:var(--bg);border:none;border-radius:7px;padding:8px;font-family:'Syne',sans-serif;font-weight:700;font-size:.83rem;cursor:pointer;transition:opacity .2s}
+.acct-save:hover{opacity:.85}
+
+/* 3-mode theme selector */
+.theme-row{display:flex;align-items:center;gap:8px;padding:8px 10px 4px;font-size:.75rem;color:var(--muted);font-weight:500}
+.theme-sel{display:flex;border-radius:8px;overflow:hidden;border:1px solid var(--border);margin:0 10px 6px}
+.t-opt{flex:1;padding:7px 2px;font-size:.7rem;font-weight:600;border:none;background:transparent;color:var(--muted);cursor:pointer;transition:background .15s,color .15s;display:flex;flex-direction:column;align-items:center;gap:2px;line-height:1.2}
+.t-opt:not(:last-child){border-right:1px solid var(--border)}
+.t-opt .ti{font-size:14px}
+.t-opt.active{background:rgba(137,194,224,.15);color:var(--accent)}
+.t-opt:hover:not(.active){background:rgba(137,194,224,.07);color:var(--text)}
+
+/* Help / FAQ */
+.help-panel{padding:10px;display:none}
+.help-panel.open{display:block}
+.faq{border:1px solid var(--border);border-radius:8px;margin-bottom:7px;overflow:hidden}
+.faq-q{padding:10px 13px;font-size:.8rem;font-weight:600;color:var(--text);cursor:pointer;display:flex;align-items:center;justify-content:space-between;transition:background .15s}
+.faq-q:hover{background:rgba(137,194,224,.05)}
+.faq-q .fqa{font-size:9px;color:var(--muted);transition:transform .2s}
+.faq.open .faq-q .fqa{transform:rotate(180deg)}
+.faq-a{display:none;padding:0 13px 10px;font-size:.78rem;color:var(--muted);line-height:1.55}
+.faq.open .faq-a{display:block}
+
+/* ── HERO ── */
+.hero{position:relative;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:120px 40px 80px;z-index:1;overflow:hidden}
+.hg{position:absolute;border-radius:50%;pointer-events:none}
+.hg1{width:700px;height:700px;background:radial-gradient(circle,rgba(137,194,224,.09),transparent 70%);top:50%;left:50%;transform:translate(-50%,-50%)}
+.hg2{width:460px;height:460px;background:radial-gradient(circle,rgba(82,148,181,.07),transparent 70%);top:20%;left:15%}
+.hg3{width:380px;height:380px;background:radial-gradient(circle,rgba(30,60,110,.18),transparent 70%);bottom:10%;right:8%}
+.hero h1{font-family:'Syne',sans-serif;font-size:clamp(2.8rem,6.5vw,6rem);font-weight:800;line-height:1.0;letter-spacing:-.04em;margin-bottom:26px;animation:fadeUp .7s ease .1s both}
+.hero h1 .gr{display:block;background:linear-gradient(135deg,#b8d8ec,#89c2e0 40%,#5294b5);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.hero p{font-size:1.1rem;font-weight:300;color:var(--muted);max-width:520px;line-height:1.75;margin-bottom:44px;animation:fadeUp .7s ease .2s both}
+.hero-btns{display:flex;gap:14px;align-items:center;justify-content:center;flex-wrap:wrap;animation:fadeUp .7s ease .3s both}
+.btn-p{display:inline-flex;align-items:center;gap:9px;background:var(--accent);color:var(--bg);padding:14px 30px;border-radius:8px;font-family:'Syne',sans-serif;font-weight:700;font-size:.93rem;text-decoration:none;transition:transform .2s,box-shadow .2s;border:none;cursor:pointer}
+.btn-p:hover{transform:translateY(-2px);box-shadow:0 8px 30px rgba(137,194,224,.36)}
+.btn-s{display:inline-flex;align-items:center;gap:9px;background:transparent;color:var(--text);padding:14px 30px;border-radius:8px;font-family:'Syne',sans-serif;font-weight:600;font-size:.93rem;text-decoration:none;border:1px solid var(--border);transition:border-color .2s,background .2s}
+.btn-s:hover{border-color:var(--accent);background:rgba(137,194,224,.05)}
+.hero-stats{display:flex;gap:44px;margin-top:76px;animation:fadeUp .7s ease .4s both}
+.stat{text-align:center}
+.stat-n{font-family:'Syne',sans-serif;font-size:1.9rem;font-weight:800;color:var(--text);letter-spacing:-.03em}
+.stat-n span{color:var(--accent)}
+.stat-l{font-size:.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:.09em;margin-top:4px}
+@keyframes fadeUp{from{opacity:0;transform:translateY(28px)}to{opacity:1;transform:translateY(0)}}
+
+/* ── ANIMATIONS ── */
+/* Page fade-in */
+@keyframes pageFadeIn{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
+body{animation:pageFadeIn .4s ease both}
+/* Navbar scroll */
+nav{transition:padding .3s ease,background .25s,box-shadow .3s}
+nav.scrolled{padding-top:10px;padding-bottom:10px;box-shadow:0 4px 24px rgba(0,0,0,.28)}
+.nav-links a.nav-active{color:var(--text)!important;font-weight:600}
+.nav-links a.nav-active::after{content:'';display:block;height:2px;background:var(--accent);border-radius:1px;margin-top:2px}
+.rep-badge{display:inline-flex;align-items:center;justify-content:center;background:var(--accent);color:var(--bg);font-size:.65rem;font-weight:800;border-radius:100px;padding:1px 6px;margin-left:5px;min-width:18px;line-height:1.5;vertical-align:middle}
+.scroll-top{position:fixed;bottom:28px;right:28px;width:42px;height:42px;border-radius:50%;background:var(--surface);border:1px solid var(--border);color:var(--accent);font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:200;opacity:0;transform:translateY(12px);transition:opacity .3s,transform .3s,box-shadow .2s,background .2s;pointer-events:none;box-shadow:0 4px 16px rgba(0,0,0,.3)}
+.scroll-top.visible{opacity:1;transform:translateY(0);pointer-events:all}
+.scroll-top:hover{background:var(--accent);color:var(--bg);box-shadow:0 6px 20px rgba(137,194,224,.35)}
+
+/* ── Animation 8: Scroll reveal ── */
+.sr{opacity:0;transform:translateY(36px);transition:opacity .65s cubic-bezier(.22,1,.36,1),transform .65s cubic-bezier(.22,1,.36,1)}
+.sr.visible{opacity:1;transform:translateY(0)}
+/* Stagger children within grid containers */
+.steps.sr-parent .step, .feats.sr-parent .feat{
+  opacity:0;transform:translateY(28px);
+  transition:opacity .55s cubic-bezier(.22,1,.36,1),transform .55s cubic-bezier(.22,1,.36,1);
+}
+.steps.sr-parent.visible .step:nth-child(1),.feats.sr-parent.visible .feat:nth-child(1){opacity:1;transform:none;transition-delay:.0s}
+.steps.sr-parent.visible .step:nth-child(2),.feats.sr-parent.visible .feat:nth-child(2){opacity:1;transform:none;transition-delay:.1s}
+.steps.sr-parent.visible .step:nth-child(3),.feats.sr-parent.visible .feat:nth-child(3){opacity:1;transform:none;transition-delay:.2s}
+.steps.sr-parent.visible .step:nth-child(4),.feats.sr-parent.visible .feat:nth-child(4){opacity:1;transform:none;transition-delay:.3s}
+.steps.sr-parent.visible .feat:nth-child(5){opacity:1;transform:none;transition-delay:.35s}
+.feats.sr-parent.visible .feat:nth-child(5){opacity:1;transform:none;transition-delay:.35s}
+.feats.sr-parent.visible .feat:nth-child(6){opacity:1;transform:none;transition-delay:.42s}
+/* Hero gradient shift */
+@keyframes gradShift{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
+.hero h1 .gr{background-size:200% 200%;animation:gradShift 5s ease infinite}
+/* Hover shimmer on step/feature cards */
+@keyframes shimmer{0%{left:-100%}100%{left:200%}}
+.step,.feat{overflow:hidden}
+.step::after,.feat::after{content:'';position:absolute;top:0;left:-100%;width:50%;height:100%;background:linear-gradient(90deg,transparent,rgba(137,194,224,.07),transparent);pointer-events:none}
+.step:hover::after,.feat:hover::after{animation:shimmer .65s ease}
+/* Report card lift */
+/* rep-card hover lift handled by JS tilt */
+
+/* ── SHARED ── */
+.sec-label{font-size:.72rem;text-transform:uppercase;letter-spacing:.16em;color:var(--accent);font-weight:600;margin-bottom:14px}
+.sec-title{font-family:'Syne',sans-serif;font-size:clamp(1.9rem,4vw,3rem);font-weight:800;letter-spacing:-.03em;line-height:1.1;margin-bottom:14px}
+
+/* ── REPORTS ── */
+.rep-sec{position:relative;z-index:1;padding:90px 60px;max-width:1100px;margin:0 auto}
+.rep-top{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:36px;flex-wrap:wrap;gap:14px}
+.view-all{display:inline-flex;align-items:center;gap:7px;background:rgba(137,194,224,.08);border:1px solid rgba(137,194,224,.2);color:var(--accent);padding:9px 18px;border-radius:7px;font-family:'Syne',sans-serif;font-weight:600;font-size:.83rem;text-decoration:none;transition:all .2s}
+.view-all:hover{background:rgba(137,194,224,.14)}
+.rep-empty{background:var(--surface);border:1px dashed var(--border);border-radius:16px;padding:56px 40px;text-align:center}
+.rep-empty-icon{font-size:38px;margin-bottom:14px;opacity:.4}
+.rep-empty h4{font-family:'Syne',sans-serif;font-size:.95rem;font-weight:700;margin-bottom:7px}
+.rep-empty p{color:var(--muted);font-size:.85rem;font-weight:300;margin-bottom:22px;line-height:1.5}
+.rep-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+/* rep-card tilt is handled by JS — no CSS hover transform override */
+.rep-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:22px;text-decoration:none;display:block;position:relative;overflow:hidden;transition:border-color .3s,box-shadow .3s;will-change:transform;transform-style:preserve-3d}
+.rep-card::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(137,194,224,.04),transparent 60%);opacity:0;transition:opacity .3s}
+.rep-card:hover::before{opacity:1}
+.rep-card:hover{border-color:rgba(137,194,224,.26);box-shadow:var(--glow)}
+.rep-top2{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.rep-score{font-family:'Syne',sans-serif;font-weight:800;font-size:1.05rem;padding:3px 13px;border-radius:100px}
+.rep-date{font-size:.72rem;color:var(--muted)}
+.rep-role{font-family:'Syne',sans-serif;font-size:.9rem;font-weight:700;color:var(--text);margin-bottom:7px}
+.rep-sum{font-size:.8rem;color:var(--muted);font-weight:300;line-height:1.45;display:-webkit-box;line-clamp:2;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.rep-foot{margin-top:14px;font-size:.75rem;color:var(--accent);font-weight:500}
+
+/* ── HOW / FEATURES / CTA ── */
+.how-sec,.feat-sec{position:relative;z-index:1;padding:90px 60px;max-width:1100px;margin:0 auto}
+.steps{display:grid;grid-template-columns:repeat(4,1fr);gap:22px;margin-top:52px}
+.step{position:relative;background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:30px 22px;transition:border-color .3s,box-shadow .3s;overflow:hidden;will-change:transform}
+.step::after{content:'';position:absolute;bottom:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--accent),var(--accent2));transform:scaleX(0);transition:transform .3s;transform-origin:left}
+.step:hover{border-color:rgba(137,194,224,.24)}
+.step:hover::after{transform:scaleX(1)}
+.step-n{font-family:'Syne',sans-serif;font-size:3.2rem;font-weight:800;color:rgba(137,194,224,.08);line-height:1;margin-bottom:18px}
+.step-ic{font-size:26px;margin-bottom:14px}
+.step h4{font-family:'Syne',sans-serif;font-size:.97rem;font-weight:700;margin-bottom:9px}
+.step p{color:var(--muted);font-size:.85rem;line-height:1.6;font-weight:300}
+.feats{display:grid;grid-template-columns:repeat(3,1fr);gap:22px;margin-top:52px}
+.feat{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:30px;transition:border-color .3s,box-shadow .3s;position:relative;overflow:hidden;will-change:transform}
+.feat::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(137,194,224,.05),transparent 60%);opacity:0;transition:opacity .3s}
+.feat:hover::before{opacity:1}
+.feat:hover{border-color:rgba(137,194,224,.2);box-shadow:var(--glow)}
+.feat-ic{width:50px;height:50px;border-radius:13px;display:flex;align-items:center;justify-content:center;font-size:21px;margin-bottom:18px;background:rgba(137,194,224,.09);border:1px solid rgba(137,194,224,.17)}
+.feat h4{font-family:'Syne',sans-serif;font-size:1rem;font-weight:700;margin-bottom:9px}
+.feat p{color:var(--muted);font-size:.85rem;line-height:1.65;font-weight:300}
+.cta-sec{position:relative;z-index:1;padding:70px 60px;max-width:1100px;margin:0 auto}
+.cta-card{background:var(--surface);border:1px solid rgba(137,194,224,.18);border-radius:22px;padding:68px 56px;text-align:center;position:relative;overflow:hidden}
+.cta-card::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at center top,rgba(137,194,224,.07),transparent 65%);pointer-events:none}
+.cta-card h2{font-family:'Syne',sans-serif;font-size:clamp(1.7rem,3.5vw,2.7rem);font-weight:800;letter-spacing:-.03em;margin-bottom:14px}
+.cta-card p{color:var(--muted);font-size:.97rem;font-weight:300;margin-bottom:32px;max-width:420px;margin-left:auto;margin-right:auto;line-height:1.6}
+
+/* ── FOOTER ── */
+footer{position:relative;z-index:1;padding:44px 60px;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.fl{font-family:'Syne',sans-serif;font-weight:800;font-size:1.05rem}
+.fl span{color:var(--accent)}
+.flinks{display:flex;gap:22px}
+.flinks a{font-size:.8rem;color:var(--muted);text-decoration:none;transition:color .2s}
+.flinks a:hover{color:var(--text)}
+
+::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:var(--bg)}::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+
+@media(max-width:768px){
+  nav{padding:14px 20px}.nav-links{display:none}.hamburger{display:flex}
+  .hero{padding:100px 22px 60px}.hero-stats{gap:18px;flex-wrap:wrap;justify-content:center}
+  .rep-sec,.how-sec,.feat-sec,.cta-sec{padding:60px 22px}
+  .steps,.feats,.rep-grid{grid-template-columns:1fr}
+  .cta-card{padding:44px 24px}
+  footer{flex-direction:column;gap:14px;text-align:center;padding:30px 22px}
+}
+</style>
+</head>
+<body>
+
+<div class="drawer-overlay" id="drawerOverlay" onclick="closeDrawer()"></div>
+<button class="scroll-top" id="scrollTop" onclick="window.scrollTo({top:0,behavior:'smooth'})" title="Back to top">↑</button>
+<div class="drawer" id="drawer">
+  <div class="drawer-head">
+    <div class="drawer-logo">Resume<span>IQ</span></div>
+    <button class="drawer-close" onclick="closeDrawer()">✕</button>
+  </div>
+  <div class="drawer-body">
+    <div class="d-section">Quick Actions</div>
+    <button class="d-item d-new" onclick="handleNewReport()"><span class="di">📝</span><span class="dl">New Report</span></button>
+    <div class="d-sep"></div>
+    <div class="d-section">Navigate</div>
+    <a href="index.html" class="d-item"><span class="di">🏠</span><span class="dl">Home</span></a>
+    <a href="analyzer.html" class="d-item"><span class="di">🔍</span><span class="dl">Analyze Resume</span></a>
+    <a href="report.html" class="d-item"><span class="di">📋</span><span class="dl">My Reports</span></a>
+    <div class="d-sep"></div>
+    <div class="d-section">Settings</div>
+    <button class="d-item" id="setBtn" onclick="toggleSub('setBtn','setSub')"><span class="di">⚙️</span><span class="dl">Settings</span><span class="da">▶</span></button>
+    <div class="d-sub" id="setSub">
+      <button class="d-sub-btn" onclick="toggleSub('','acctPanel')"><span class="di">👤</span> Your Account</button>
+      <div class="acct-panel" id="acctPanel">
+        <div class="acct-av" id="acctAv">?</div>
+        <div class="acct-nm" id="acctNm">Guest User</div>
+        <div class="acct-st" id="acctSt">0 analyses done</div>
+        <input class="acct-inp" id="acctName" placeholder="Your name…" maxlength="30"/>
+        <input class="acct-inp" id="acctEmail" placeholder="Email (optional)…" maxlength="60"/>
+        <button class="acct-save" onclick="saveAccount()">Save</button>
+      </div>
+      <div class="theme-row"><span>🌓</span> Theme</div>
+      <div class="theme-sel">
+        <button class="t-opt" data-t="light" onclick="setTheme('light')"><span class="ti">🌞</span>Light</button>
+        <button class="t-opt" data-t="system" onclick="setTheme('system')"><span class="ti">💻</span>System</button>
+        <button class="t-opt" data-t="dark" onclick="setTheme('dark')"><span class="ti">🌙</span>Dark</button>
+      </div>
+      <button class="d-sub-btn" onclick="toggleSub('','helpPanel')"><span class="di">❓</span> Get Help</button>
+      <div class="help-panel" id="helpPanel">
+        <div class="faq" onclick="this.classList.toggle('open')"><div class="faq-q">How do I analyze my resume?<span class="fqa">▼</span></div><div class="faq-a">Upload a PDF or DOCX on the Analyzer page, type your target job role, and click Analyze Now. Results appear in ~30 seconds.</div></div>
+        <div class="faq" onclick="this.classList.toggle('open')"><div class="faq-q">What file formats work?<span class="fqa">▼</span></div><div class="faq-a">PDF and DOCX files up to 5 MB. Ensure your PDF has selectable text (not a scanned image).</div></div>
+        <div class="faq" onclick="this.classList.toggle('open')"><div class="faq-q">How is my score calculated?<span class="fqa">▼</span></div><div class="faq-a">The AI evaluates Content Quality, Skills Match, Structure & Format, and ATS Compatibility — averaged into a score out of 100.</div></div>
+        <div class="faq" onclick="this.classList.toggle('open')"><div class="faq-q">Is my data stored online?<span class="fqa">▼</span></div><div class="faq-a">No. Your resume text is only used during analysis and never stored on any server. Reports are saved in your browser only.</div></div>
+        <div class="faq" onclick="this.classList.toggle('open')"><div class="faq-q">What is ATS?<span class="fqa">▼</span></div><div class="faq-a">Applicant Tracking System — software employers use to filter resumes before a human reads them. High ATS score = better keyword alignment.</div></div>
+        <div class="faq" onclick="this.classList.toggle('open')"><div class="faq-q">How do I improve my score?<span class="fqa">▼</span></div><div class="faq-a">Follow the Suggestions and add the Missing Skills from your report. Quantify achievements and tailor keywords to the job role.</div></div>
+        <div class="faq" onclick="this.classList.toggle('open')"><div class="faq-q">Can I share my report?<span class="fqa">▼</span></div><div class="faq-a">Yes — open a saved report and click the Share button to copy a shareable link. Anyone with the link can view the report in their browser.</div></div>
+      </div>
+    </div>
+  </div>
+  <div class="drawer-foot"><div class="drawer-foot-txt">ResumeIQ · All data stored locally in your browser</div></div>
+</div>
+
+<nav>
+  <button class="nav-menu-btn" onclick="openDrawer()"><span></span><span></span><span></span></button>
+  <a href="index.html" class="logo"><div class="logo-dot"></div>Resume<span>IQ</span></a>
+  <ul class="nav-links">
+    <li><a href="#how">How It Works</a></li>
+    <li><a href="#features">Features</a></li>
+    <li><a href="report.html">📋 My Reports<span class="rep-badge" id="navRepBadge" style="display:none"></span></a></li>
+    <li><a href="analyzer.html" class="nav-cta">Try Free →</a></li>
+  </ul>
+  <button class="hamburger" id="hbg"><span></span><span></span><span></span></button>
+</nav>
+<div class="mobile-menu" id="mobMenu">
+  <a href="#how" onclick="closeMob()">How It Works</a>
+  <a href="#features" onclick="closeMob()">Features</a>
+  <a href="report.html" onclick="closeMob()">My Reports</a>
+  <a href="analyzer.html" class="m-cta">⚡ Try Free</a>
+</div>
+
+<section class="hero">
+  <canvas id="particleCanvas" style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:0;opacity:.55"></canvas>
+  <div class="hg hg1"></div><div class="hg hg2"></div><div class="hg hg3"></div>
+  <h1>Your Resume,<span class="gr">Analyzed by AI</span></h1>
+  <p>Upload your resume and get an instant, detailed breakdown — score, strengths, gaps, and actionable suggestions to land your next role.</p>
+  <div class="hero-btns">
+    <a href="analyzer.html" class="btn-p">⚡ Analyze My Resume</a>
+    <a href="#how" class="btn-s">See How It Works →</a>
+  </div>
+  <div class="hero-stats">
+    <div class="stat"><div class="stat-n" id="stAcc">0<span>%</span></div><div class="stat-l">Accuracy Rate</div></div>
+    <div class="stat"><div class="stat-n" id="stCnt">0<span>+</span></div><div class="stat-l">Resumes Analyzed</div></div>
+    <div class="stat"><div class="stat-n" id="stTime">0<span>s</span></div><div class="stat-l">Avg. Analysis Time</div></div>
+  </div>
+</section>
+
+<section class="rep-sec sr" id="reports">
+  <div class="rep-top">
+    <div><div class="sec-label">— Your History</div><h2 class="sec-title">Saved Reports</h2></div>
+    <a href="report.html" class="view-all">View All Reports →</a>
+  </div>
+  <div id="repContainer"></div>
+</section>
+
+<section class="how-sec sr" id="how">
+  <div class="sec-label">— Process</div>
+  <h2 class="sec-title">How ResumeIQ Works</h2>
+  <div class="steps sr-parent">
+    <div class="step"><div class="step-n">01</div><div class="step-ic">📤</div><h4>Upload Resume</h4><p>Drop your PDF or DOCX. Our parser extracts all text accurately.</p></div>
+    <div class="step"><div class="step-n">02</div><div class="step-ic">🤖</div><h4>AI Processing</h4><p>Claude AI reads every section — skills, experience, education, and format.</p></div>
+    <div class="step"><div class="step-n">03</div><div class="step-ic">📊</div><h4>Score & Insights</h4><p>Get a score out of 100 with strengths, gaps, and specific suggestions.</p></div>
+    <div class="step"><div class="step-n">04</div><div class="step-ic">🚀</div><h4>Improve & Apply</h4><p>Act on the feedback, improve your resume, and apply with confidence.</p></div>
+  </div>
+</section>
+
+<section class="feat-sec sr" id="features">
+  <div class="sec-label">— Features</div>
+  <h2 class="sec-title">Everything You Need to<br/>Stand Out</h2>
+  <div class="feats sr-parent">
+    <div class="feat"><div class="feat-ic">🎯</div><h4>Role-Targeted Analysis</h4><p>Type your target job role and get feedback tailored to what hiring managers look for in that specific position.</p></div>
+    <div class="feat"><div class="feat-ic">📈</div><h4>ATS Compatibility</h4><p>Know if your resume will pass Applicant Tracking Systems before it ever reaches a human recruiter.</p></div>
+    <div class="feat"><div class="feat-ic">🔍</div><h4>Keyword Gap Detection</h4><p>Find exactly which skills and keywords are missing that employers in your target field expect to see.</p></div>
+    <div class="feat"><div class="feat-ic">✉️</div><h4>Cover Letter Generator</h4><p>Instantly generate a tailored cover letter draft based on your resume and target role — ready to copy and personalise.</p></div>
+    <div class="feat"><div class="feat-ic">📋</div><h4>Readiness Checklist</h4><p>A 10-point pre-flight checklist to ensure your resume is complete, clean, and ATS-ready before you upload.</p></div>
+    <div class="feat"><div class="feat-ic">🔒</div><h4>Private & Secure</h4><p>Your resume is never stored on any server. All analysis happens in real-time and data stays in your browser only.</p></div>
+  </div>
+</section>
+
+<section class="cta-sec sr">
+  <div class="cta-card">
+    <h2>Ready to Upgrade Your Resume?</h2>
+    <p>Join thousands of job seekers who improved their resume score and landed more interviews.</p>
+    <a href="analyzer.html" class="btn-p">⚡ Analyze My Resume — It's Free</a>
+  </div>
+</section>
+
+<footer>
+  <div class="fl">Resume<span>IQ</span></div>
+  <div class="flinks">
+    <a href="#how">How It Works</a><a href="#features">Features</a>
+    <a href="report.html">My Reports</a><a href="analyzer.html">Analyzer</a>
+  </div>
+</footer>
+
+<script>
+// ── Theme: 3-mode (runs before paint) ────────────────────────────
+(function(){
+  var m=localStorage.getItem('riq_theme')||'dark';
+  if(m==='light') document.body.classList.add('light');
+  else if(m==='system'&&!window.matchMedia('(prefers-color-scheme: dark)').matches) document.body.classList.add('light');
+})();
+function applyTheme(m){
+  if(m==='light') document.body.classList.add('light');
+  else if(m==='dark') document.body.classList.remove('light');
+  else document.body.classList.toggle('light',!window.matchMedia('(prefers-color-scheme: dark)').matches);
+}
+function setTheme(m){
+  localStorage.setItem('riq_theme',m);
+  applyTheme(m);
+  document.querySelectorAll('.t-opt').forEach(function(b){b.classList.toggle('active',b.dataset.t===m);});
+}
+(function(){
+  var m=localStorage.getItem('riq_theme')||'dark';
+  applyTheme(m);
+  document.querySelectorAll('.t-opt').forEach(function(b){b.classList.toggle('active',b.dataset.t===m);});
+  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change',function(){
+    if((localStorage.getItem('riq_theme')||'dark')==='system') applyTheme('system');
+  });
+})();
+
+// ── Drawer ────────────────────────────────────────────────────────
+function openDrawer(){
+  document.getElementById('drawer').classList.add('open');
+  document.getElementById('drawerOverlay').classList.add('open');
+  document.body.style.overflow='hidden';
+  loadAccount();
+}
+function closeDrawer(){
+  document.getElementById('drawer').classList.remove('open');
+  document.getElementById('drawerOverlay').classList.remove('open');
+  document.body.style.overflow='';
+}
+function toggleSub(btnId,subId){
+  if(btnId){var b=document.getElementById(btnId);b&&b.classList.toggle('open');}
+  var s=document.getElementById(subId);
+  if(s){s.classList.toggle('open');}
+}
+
+// ── Account ───────────────────────────────────────────────────────
+function loadAccount(){
+  var name=localStorage.getItem('riq_name')||'';
+  var count=parseInt(localStorage.getItem('riq_count')||'0');
+  document.getElementById('acctName').value=name;
+  document.getElementById('acctEmail').value=localStorage.getItem('riq_email')||'';
+  document.getElementById('acctNm').textContent=name||'Guest User';
+  document.getElementById('acctAv').textContent=name?name[0].toUpperCase():'?';
+  document.getElementById('acctSt').textContent=count+' anal'+(count===1?'ysis':'yses')+' done';
+}
+function saveAccount(){
+  var n=document.getElementById('acctName').value.trim();
+  var e=document.getElementById('acctEmail').value.trim();
+  if(n) localStorage.setItem('riq_name',n);
+  if(e) localStorage.setItem('riq_email',e);
+  loadAccount();
+  document.getElementById('acctPanel').classList.remove('open');
+}
+
+// ── New Report ────────────────────────────────────────────────────
+function handleNewReport(){
+  var reps=JSON.parse(localStorage.getItem('riq_reports')||'[]');
+  if(reps.length>0){
+    var latest=reps.slice().reverse()[0];
+    if(!dlReport(latest)) alert('Previous updated report downloaded.');
+    localStorage.removeItem('riq_reports');
+  }
+  closeDrawer();
+  setTimeout(function(){window.location.href='analyzer.html';},350);
+}
+function dlReport(r){
+  try{
+    var lines=['ResumeIQ — Resume Analysis Report','='.repeat(40),
+      'Role: '+r.jobRole,'Score: '+r.score+'/100',
+      'Date: '+new Date(r.timestamp).toLocaleString(),'',
+      'SUMMARY',r.summary,'',
+      'STRENGTHS',(r.strengths||[]).map(function(s,i){return (i+1)+'. '+s;}).join('\n'),'',
+      'WEAKNESSES',(r.weaknesses||[]).map(function(s,i){return (i+1)+'. '+s;}).join('\n'),'',
+      'SUGGESTIONS',(r.suggestions||[]).map(function(s,i){return (i+1)+'. '+s;}).join('\n'),'',
+      'MISSING SKILLS',(r.missing_skills||[]).join(', ')];
+    var blob=new Blob([lines.join('\n')],{type:'text/plain'});
+    var a=document.createElement('a');
+    a.href=URL.createObjectURL(blob);
+    a.download='ResumeIQ_'+r.jobRole.replace(/\s+/g,'_')+'.txt';
+    a.click(); return true;
+  }catch(e){return false;}
+}
+
+// ── Hamburger ─────────────────────────────────────────────────────
+var hbg=document.getElementById('hbg'),mob=document.getElementById('mobMenu');
+hbg.addEventListener('click',function(){
+  hbg.classList.toggle('open');mob.classList.toggle('open');
+  document.body.style.overflow=mob.classList.contains('open')?'hidden':'';
+});
+function closeMob(){hbg.classList.remove('open');mob.classList.remove('open');document.body.style.overflow='';}
+
+// ── Stats ─────────────────────────────────────────────────────────
+function renderStats(){
+  var count=parseInt(localStorage.getItem('riq_count')||'0');
+  var times=JSON.parse(localStorage.getItem('riq_times')||'[]');
+  var avg=times.length?Math.round(times.reduce(function(a,b){return a+b;},0)/times.length):0;
+  var acc=count>0?Math.min(99,96+Math.floor(count/2000)):0;
+  document.getElementById('stAcc').innerHTML=acc+'<span>%</span>';
+  var d=count>=1000?(count/1000).toFixed(count%1000===0?0:1)+'K<span>+</span>':count+'<span>+</span>';
+  document.getElementById('stCnt').innerHTML=d;
+  document.getElementById('stTime').innerHTML=avg>0?'&lt;'+avg+'<span>s</span>':'0<span>s</span>';
+}
+
+// ── Reports preview ───────────────────────────────────────────────
+function scCol(s){return s>=80?'#4ade80':s>=50?'#fbbf24':'#f87171';}
+function renderReports(){
+  var c=document.getElementById('repContainer');
+  var reps=JSON.parse(localStorage.getItem('riq_reports')||'[]');
+  if(!reps.length){
+    c.innerHTML='<div class="rep-empty"><div class="rep-empty-icon">📋</div><h4>No reports yet</h4><p>Analyze your resume to generate your first report. It\'ll appear here automatically.</p><a href="analyzer.html" class="btn-p" style="display:inline-flex;margin-top:4px">⚡ Analyze Now</a></div>';
+    return;
+  }
+  var latest=reps.slice().reverse().slice(0,3);
+  c.innerHTML='<div class="rep-grid">'+latest.map(function(r){
+    var col=scCol(r.score);
+    return '<a href="report.html?id='+r.id+'" class="rep-card">'
+      +'<div class="rep-top2"><div class="rep-score" style="color:'+col+';background:'+col+'18;border:1px solid '+col+'44">'+r.score+'/100</div>'
+      +'<div class="rep-date">'+new Date(r.timestamp).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'})+'</div></div>'
+      +'<div class="rep-role">'+r.jobRole+'</div>'
+      +'<div class="rep-sum">'+r.summary+'</div>'
+      +'<div class="rep-foot">View full report →</div></a>';
+  }).join('')+'</div>';
+}
+renderStats(); renderReports();
+
+// ── Animation 6: Hero floating particles ──────────────────────────
+(function(){
+  var canvas=document.getElementById('particleCanvas');
+  var ctx=canvas.getContext('2d');
+  var pts=[];
+  var COUNT=55;
+
+  function resize(){
+    var hero=canvas.parentElement;
+    canvas.width=hero.offsetWidth;
+    canvas.height=hero.offsetHeight;
+  }
+
+  function rand(min,max){return min+Math.random()*(max-min);}
+
+  function mkParticle(){
+    return {
+      x:rand(0,canvas.width),
+      y:rand(0,canvas.height),
+      r:rand(1,2.8),
+      vx:rand(-.18,.18),
+      vy:rand(-.22,-.06),  // drift slowly upward
+      alpha:rand(.15,.55),
+      pulse:rand(0,Math.PI*2), // phase offset for twinkle
+      pulseSpeed:rand(.004,.012)
+    };
+  }
+
+  function init(){
+    resize();
+    pts=[];
+    for(var i=0;i<COUNT;i++) pts.push(mkParticle());
+  }
+
+  // Detect accent colour from CSS variable
+  function accentRGB(){
+    var light=document.body.classList.contains('light');
+    return light?'26,111,160':'137,194,224';
+  }
+
+  function draw(){
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    var rgb=accentRGB();
+    for(var i=0;i<pts.length;i++){
+      var p=pts[i];
+      // twinkle: pulse alpha gently
+      p.pulse+=p.pulseSpeed;
+      var a=p.alpha*(0.65+0.35*Math.sin(p.pulse));
+      ctx.beginPath();
+      ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
+      ctx.fillStyle='rgba('+rgb+','+a+')';
+      ctx.fill();
+
+      p.x+=p.vx;
+      p.y+=p.vy;
+
+      // wrap edges
+      if(p.y<-5)    p.y=canvas.height+5;
+      if(p.x<-5)    p.x=canvas.width+5;
+      if(p.x>canvas.width+5)  p.x=-5;
+    }
+    requestAnimationFrame(draw);
+  }
+
+  window.addEventListener('resize',function(){
+    resize();
+    // reposition any out-of-bounds particles after resize
+    pts.forEach(function(p){
+      if(p.x>canvas.width)  p.x=rand(0,canvas.width);
+      if(p.y>canvas.height) p.y=rand(0,canvas.height);
+    });
+  });
+
+  init();
+  draw();
+})();
+
+// ── Animation 10: Card 3D tilt on mousemove ───────────────────────
+(function(){
+  var STRENGTH = 10; // max tilt in degrees
+
+  function applyTilt(card, e){
+    var r  = card.getBoundingClientRect();
+    var dx = (e.clientX - (r.left + r.width  / 2)) / (r.width  / 2);
+    var dy = (e.clientY - (r.top  + r.height / 2)) / (r.height / 2);
+    card.style.transition = 'transform .08s ease,border-color .3s,box-shadow .3s';
+    card.style.transform  =
+      'perspective(700px) rotateX('+(-dy*STRENGTH)+'deg) rotateY('+(dx*STRENGTH)+'deg) translateY(-6px) scale(1.02)';
+  }
+  function resetTilt(card){
+    card.style.transition = 'transform .42s cubic-bezier(.22,1,.36,1),border-color .3s,box-shadow .3s';
+    card.style.transform  = 'perspective(700px) rotateX(0deg) rotateY(0deg) translateY(0) scale(1)';
+  }
+
+  // Step & Feature cards — static in DOM at load
+  ['step','feat'].forEach(function(cls){
+    document.querySelectorAll('.'+cls).forEach(function(c){
+      c.style.transformStyle = 'preserve-3d';
+      c.style.willChange = 'transform';
+      c.addEventListener('mousemove',  function(e){ applyTilt(c,e); });
+      c.addEventListener('mouseleave', function(){  resetTilt(c);   });
+    });
+  });
+
+  // Report preview cards — dynamic (rendered after localStorage read)
+  // Use delegation on the section so cards created later still get tilt
+  var repSec = document.getElementById('reports');
+  repSec.addEventListener('mousemove', function(e){
+    var card = e.target.closest && e.target.closest('.rep-card');
+    if(!card) return;
+    card.style.willChange = 'transform';
+    applyTilt(card, e);
+  });
+  repSec.addEventListener('mouseover', function(e){
+    var from = e.relatedTarget && e.relatedTarget.closest && e.relatedTarget.closest('.rep-card');
+    var to   = e.target.closest && e.target.closest('.rep-card');
+    if(from && from !== to) resetTilt(from);
+  });
+  repSec.addEventListener('mouseleave', function(){
+    repSec.querySelectorAll('.rep-card').forEach(resetTilt);
+  });
+})();
+
+// ── Animation 8: Scroll reveal with IntersectionObserver ─────────
+(function(){
+  if(!window.IntersectionObserver) return; // graceful fallback
+  var io = new IntersectionObserver(function(entries){
+    entries.forEach(function(entry){
+      if(!entry.isIntersecting) return;
+      var el = entry.target;
+      el.classList.add('visible');
+      // If it's a grid parent, mark it visible so children transition via CSS
+      if(el.classList.contains('sr-parent')) el.classList.add('visible');
+      io.unobserve(el);
+    });
+  }, { threshold: 0.12 });
+
+  // Observe section-level .sr elements
+  document.querySelectorAll('.sr').forEach(function(el){ io.observe(el); });
+  // Observe grid parents separately so child stagger triggers
+  document.querySelectorAll('.sr-parent').forEach(function(el){ io.observe(el); });
+})();
+
+// ── Navbar scroll shrink ──────────────────────────────────────────
+window.addEventListener('scroll',function(){
+  document.querySelector('nav').classList.toggle('scrolled',window.scrollY>40);
+},{passive:true});
+
+// ── Escape closes drawer / mobile menu ───────────────────────────
+document.addEventListener('keydown',function(e){
+  if(e.key==='Escape'){ closeDrawer(); closeMob(); }
+});
+
+// ── Active nav link ───────────────────────────────────────────────
+(function(){
+  var page=location.pathname.split('/').pop()||'index.html';
+  document.querySelectorAll('.nav-links a').forEach(function(a){
+    var href=(a.getAttribute('href')||'').split('#')[0].split('/').pop();
+    if(href && href===page) a.classList.add('nav-active');
+  });
+})();
+
+// ── Report count badge ────────────────────────────────────────────
+(function(){
+  var badge=document.getElementById('navRepBadge');
+  if(!badge) return;
+  var count=JSON.parse(localStorage.getItem('riq_reports')||'[]').length;
+  if(count>0){badge.textContent=count;badge.style.display='inline-flex';}
+})();
+
+// ── Scroll-to-top visibility ──────────────────────────────────────
+window.addEventListener('scroll',function(){
+  var btn=document.getElementById('scrollTop');
+  if(btn) btn.classList.toggle('visible',window.scrollY>80);
+},{passive:true});
+</script>
+</body>
+</html>
