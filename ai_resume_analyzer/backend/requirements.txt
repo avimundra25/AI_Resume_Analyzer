@@ -10,7 +10,7 @@ python-dotenv==1.2.2
 
 # NLP & Text Processing
 spacy==3.7.2
-sentence-transformers==2.2.2
+sentence-transformers==2.7.0
 
 # Document Processing
 pdfplumber==0.10.3
